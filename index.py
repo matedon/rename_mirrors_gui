@@ -29,6 +29,18 @@ class MainWindow(QtWidgets.QMainWindow):
         self.model = MirrorModel()
         self.load()
 
+    def load(self):
+        self.paths.append(self.path1)
+        self.lists.append(self.list1)
+        self.listFill(config['paths'][0])
+        self.list1.itemDoubleClicked.connect(self.listDoubleClick)
+        #self.addButton.pressed.connect(self.list1)
+        self.path1.returnPressed.connect(self.listFill)
+        self.dev1.clicked.connect(self.duplicateLayout)
+
+    def layoutClicked(self):
+        print(self, self.objectName())
+
     def duplicateLayout(self):
         self.clNum = self.clNum + 1
         layout2 = QVBoxLayout()
@@ -44,12 +56,15 @@ class MainWindow(QtWidgets.QMainWindow):
                 cw = type(widget)(objectName = cwName)
                 layout2.addWidget(cw)
                 cw.installEventFilter(self)
+                
                 if "path" in cw.objectName():
                     self.paths.append(cw)
-                    # TODO: DOUBLECLICK NOT WORKS!
-                    cw.itemDoubleClicked = self.listDoubleClick
+                    self.paths[-1].returnPressed.connect(self.listFill)
                 if "list" in cw.objectName():
                     self.lists.append(cw)
+                    self.lists[-1].itemDoubleClicked.connect(self.listDoubleClick)
+                    # TODO: DOUBLECLICK NOT WORKS!
+                    # cw.itemDoubleClicked = self.listDoubleClick
 
     def eventFilter(self, obj, event):
         #print('eventFilter', event.type(), obj.objectName())
@@ -57,31 +72,8 @@ class MainWindow(QtWidgets.QMainWindow):
             if event.key() in (QtCore.Qt.Key_Return, QtCore.Qt.Key_Enter):
                 self.listFill(obj.text(), int(obj.objectName().split('__')[1]))
                 return True
-        if event.type() == QtCore.QEvent.MouseButtonPress:
-            self.single_click_timer.start()
-            return True
-        elif event.type() == QtCore.QEvent.MouseButtonDblClick:
-            self.single_click_timer.stop()
-            print('double click')
-            return True
         return super(MainWindow, self).eventFilter(obj, event)
-
-    def load(self):
-        self.single_click_timer = QtCore.QTimer()
-        self.single_click_timer.setInterval(200)
-        self.single_click_timer.timeout.connect(self.single_click)
-
-        self.paths.append(self.path1)
-        self.lists.append(self.list1)
-        self.listFill(config['paths'][0])
-        self.list1.itemDoubleClicked.connect(self.listDoubleClick)
-        #self.addButton.pressed.connect(self.list1)
-        self.path1.returnPressed.connect(self.listFill)
-        self.dev1.clicked.connect(self.duplicateLayout)
-
-    def single_click(self):
-        self.single_click_timer.stop()
-        print('timeout, must be single click')
+    
 
     def listFill(self, route=None, num=0):
         path = self.paths[num]
@@ -101,6 +93,7 @@ class MainWindow(QtWidgets.QMainWindow):
             list.addItem(name)
 
     def listDoubleClick(self, item):
+        print('listDoubleClick', item.parent().objectName())
         path = self.path1.text().rstrip(os.sep)
         itemText = item.text()
         isBack = False
